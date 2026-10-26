@@ -200,16 +200,16 @@ const libDb = mysql.createPool({
 
 // SQL for each page (? is where a value goes)
 const SQL = {
-  allAuthors:   'SELECT author_id, name, country FROM author ORDER BY author_id',
-  oneAuthor:    'SELECT author_id, name, country FROM author WHERE author_id = ?',
-  addAuthor:    'INSERT INTO author (name, country) VALUES (?, ?)',
-  editAuthor:   'UPDATE author SET name = ?, country = ? WHERE author_id = ?',
+  allAuthors: 'SELECT author_id, name, country FROM author ORDER BY author_id',
+  oneAuthor: 'SELECT author_id, name, country FROM author WHERE author_id = ?',
+  addAuthor: 'INSERT INTO author (name, country) VALUES (?, ?)',
+  editAuthor: 'UPDATE author SET name = ?, country = ? WHERE author_id = ?',
   deleteAuthor: 'DELETE FROM author WHERE author_id = ?',
-  allBooks:     'SELECT book_id, title, price, author_id FROM book ORDER BY book_id',
-  oneBook:      'SELECT book_id, title, price, author_id FROM book WHERE book_id = ?',
-  addBook:      'INSERT INTO book (title, price, author_id) VALUES (?, ?, ?)',
-  editBook:     'UPDATE book SET title = ?, price = ?, author_id = ? WHERE book_id = ?',
-  deleteBook:   'DELETE FROM book WHERE book_id = ?'
+  allBooks: 'SELECT book_id, title, price, author_id FROM book ORDER BY book_id',
+  oneBook: 'SELECT book_id, title, price, author_id FROM book WHERE book_id = ?',
+  addBook: 'INSERT INTO book (title, price, author_id) VALUES (?, ?, ?)',
+  editBook: 'UPDATE book SET title = ?, price = ?, author_id = ? WHERE book_id = ?',
+  deleteBook: 'DELETE FROM book WHERE book_id = ?'
 };
 
 // same sizes as the VARCHARs in the DDL
