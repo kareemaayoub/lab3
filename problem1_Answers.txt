@@ -1,0 +1,78 @@
+Lab 3 - Problem 1 answers (COMPANY database)
+Kareem Mohamed Said Khalil Ayoub (2304003) and Abdelrahman Waleed (2304221), group 2
+
+Before the questions: we ran problem1_DDL.sql and then problem1_DML.sql.
+The tables have 3 departments, 4 employees and 3 projects.
+The two tables point at each other, so in the DDL the foreign key
+DEPARTMENT.mgr_ssn is added at the end with ALTER TABLE.
+In the DML the departments are inserted first (without a manager), then the
+employees, then we UPDATE each department to give it its manager.
+
+
+Q1.1 Insert a row in DEPARTMENT that references a row in EMPLOYEE.
+     Then try to delete the referenced row. What will happen?
+
+SQL:
+INSERT INTO department VALUES (4, 'Marketing', '987654321', '2024-01-15');
+DELETE FROM employee WHERE ssn = '987654321';
+
+Output:
+The INSERT works (1 row affected), because employee 987654321 exists.
+The DELETE gives this error:
+ERROR 1451 (23000): Cannot delete or update a parent row: a foreign key constraint fails (`company`.`department`, CONSTRAINT `department_ibfk_1` FOREIGN KEY (`mgr_ssn`) REFERENCES `employee` (`ssn`))
+
+Answer: the delete is refused and the employee stays in the table. An employee that
+is the manager of a department cannot be deleted, because the department would be
+pointing at a row that does not exist. We would have to change or delete the
+department first.
+
+
+Q1.2 Insert a row in PROJECT that references a DEPARTMENT that doesn't exist yet.
+     What will happen?
+
+SQL:
+INSERT INTO project VALUES (4, 'MobileApp', 'Alexandria', 99);
+
+Output:
+ERROR 1452 (23000): Cannot add or update a child row: a foreign key constraint fails (`company`.`project`, CONSTRAINT `project_ibfk_1` FOREIGN KEY (`Dno`) REFERENCES `department` (`Dnumber`))
+
+Answer: the insert is refused, because there is no department 99. The department
+has to be inserted first, then the project.
+
+
+Q1.3 If mgr_ssn and Dno are both NOT NULL, how will you insert the first row in
+     EMPLOYEE or DEPARTMENT?
+
+We tried it on a small copy of the tables in a test database (company_test) where
+mgr_ssn and Dno are NOT NULL:
+
+CREATE TABLE department (Dnumber INT PRIMARY KEY, Dname VARCHAR(50), mgr_ssn CHAR(9) NOT NULL);
+CREATE TABLE employee (ssn CHAR(9) PRIMARY KEY, fname VARCHAR(30), Dno INT NOT NULL, FOREIGN KEY (Dno) REFERENCES department(Dnumber));
+ALTER TABLE department ADD FOREIGN KEY (mgr_ssn) REFERENCES employee(ssn);
+
+Employee first:
+INSERT INTO employee VALUES ('111111111', 'Ali', 1);
+ERROR 1452 (23000): Cannot add or update a child row: a foreign key constraint fails (`company_test`.`employee`, CONSTRAINT `employee_ibfk_1` FOREIGN KEY (`Dno`) REFERENCES `department` (`Dnumber`))
+
+Department first:
+INSERT INTO department VALUES (1, 'Research', '111111111');
+ERROR 1452 (23000): Cannot add or update a child row: a foreign key constraint fails (`company_test`.`department`, CONSTRAINT `department_ibfk_1` FOREIGN KEY (`mgr_ssn`) REFERENCES `employee` (`ssn`))
+
+Both fail, because each row needs the other one to exist first.
+The way out is to turn the foreign key check off for the first rows:
+
+SET FOREIGN_KEY_CHECKS = 0;
+INSERT INTO department VALUES (1, 'Research', '111111111');
+INSERT INTO employee VALUES ('111111111', 'Ali', 1);
+SET FOREIGN_KEY_CHECKS = 1;
+
+Output: all three statements work, and the tables have the rows:
+department: 1, Research, 111111111
+employee: 111111111, Ali, 1
+
+Answer: switch off the check, insert the first employee and the first department
+(pointing at each other), then switch the check on again. (The other way is to
+leave one of the two columns nullable, insert one row with NULL, insert the other
+row, and then UPDATE the first one. That is what we did in problem1_DML.sql.)
+After this test we dropped company_test and ran our DDL and DML again, so the
+company database is back to the original data.
