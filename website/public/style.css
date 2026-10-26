@@ -144,3 +144,25 @@ input:focus { border-color: #89CFF0; box-shadow: 0 0 0 3px rgba(137, 207, 240, 0
     h2 { font-size: 26px; }
     .add-form { flex-direction: column; }
 }
+
+/* ===== Lab 3: library pages ===== */
+.user-box { flex-wrap: wrap; }
+.nav { display: flex; gap: 12px; }
+.nav a { color: #cbd5e1; font-weight: 600; text-decoration: none; white-space: nowrap; }
+.nav a:hover { color: #fff; text-decoration: underline; }
+.lib-form { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0 4px; }
+.lib-form input, .lib-form select { flex: 1 1 140px; min-width: 0; }
+select { padding: 10px; border-radius: 8px; border: 1px solid #475569; background: #0f172a; color: #e2e8f0; font: inherit; width: 100%; }
+.table-wrap { overflow-x: auto; margin-top: 12px; }
+table.data { width: 100%; border-collapse: collapse; color: #e2e8f0; font-size: 15px; }
+table.data th, table.data td { padding: 8px 10px; border-bottom: 1px solid #334155; text-align: left; vertical-align: middle; }
+table.data th { color: #94a3b8; font-size: 13px; }
+.actions { display: flex; gap: 6px; align-items: center; justify-content: flex-end; }
+.actions form { margin: 0; }
+a.btn, a.btn-outline { display: inline-block; text-decoration: none; text-align: center; }
+
+@media (max-width: 480px) {
+    table.data { font-size: 14px; }
+    table.data th, table.data td { padding: 8px 6px; }
+    .actions { flex-direction: column; align-items: stretch; }
+}

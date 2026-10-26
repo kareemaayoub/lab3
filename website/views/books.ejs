@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Books</title>
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+    <div class="card wide">
+        <%- include('nav', { title: 'Books' }) %>
+
+        <form class="lib-form" action="/books" method="POST">
+            <input type="text" name="title" placeholder="Title" value="<%= old.title || '' %>">
+            <input type="text" name="price" placeholder="Price" value="<%= old.price || '' %>">
+            <select name="author_id">
+                <option value="">Choose an author</option>
+                <% authors.forEach(a => { %>
+                    <option value="<%= a.author_id %>" <%= String(old.author_id) === String(a.author_id) ? 'selected' : '' %>>
+                        <%= a.name %> (<%= a.author_id %>)
+                    </option>
+                <% }) %>
+            </select>
+            <button type="submit" class="btn">Add book</button>
+        </form>
+        <span class="field-error"><%= errors.add || '' %></span>
+
+        <% if (books.length === 0) { %>
+            <p class="empty">No books yet. Add the first one above.</p>
+        <% } else { %>
+            <div class="table-wrap">
+                <table class="data">
+                    <tr><th>ID</th><th>Title</th><th>Price</th><th>Author ID</th><th></th></tr>
+                    <% books.forEach(b => { %>
+                        <tr>
+                            <td><%= b.book_id %></td>
+                            <td><%= b.title %></td>
+                            <td><%= b.price %></td>
+                            <td><%= b.author_id %></td>
+                            <td>
+                                <div class="actions">
+                                <a class="btn-outline" href="/books/<%= b.book_id %>/edit">Edit</a>
+                                <form action="/books/<%= b.book_id %>/delete" method="POST"
+                                      onsubmit="return confirm('Are you sure you want to delete this book?')">
+                                    <button type="submit" class="btn-danger">Delete</button>
+                                </form>
+                                </div>
+                            </td>
+                        </tr>
+                    <% }) %>
+                </table>
+            </div>
+        <% } %>
+    </div>
+</body>
+</html>

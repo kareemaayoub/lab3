@@ -188,9 +188,185 @@ app.post('/todo/delete/:id', requireLogin, handle(async (req, res) => {
   res.redirect('/todo');
 }));
 
+// library database connection
+const libDb = mysql.createPool({
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASS,
+  database: process.env.LIB_DB_NAME,
+  waitForConnections: true,
+  connectionLimit: 10
+}).promise();
+
+// SQL for each page (? is where a value goes)
+const SQL = {
+  allAuthors:   'SELECT author_id, name, country FROM author ORDER BY author_id',
+  oneAuthor:    'SELECT author_id, name, country FROM author WHERE author_id = ?',
+  addAuthor:    'INSERT INTO author (name, country) VALUES (?, ?)',
+  editAuthor:   'UPDATE author SET name = ?, country = ? WHERE author_id = ?',
+  deleteAuthor: 'DELETE FROM author WHERE author_id = ?',
+  allBooks:     'SELECT book_id, title, price, author_id FROM book ORDER BY book_id',
+  oneBook:      'SELECT book_id, title, price, author_id FROM book WHERE book_id = ?',
+  addBook:      'INSERT INTO book (title, price, author_id) VALUES (?, ?, ?)',
+  editBook:     'UPDATE book SET title = ?, price = ?, author_id = ? WHERE book_id = ?',
+  deleteBook:   'DELETE FROM book WHERE book_id = ?'
+};
+
+// same sizes as the VARCHARs in the DDL
+const MAX = { name: 100, country: 50, title: 200 };
+
+function checkText(raw, label, max) {
+  const value = (raw || '').trim();
+  if (value === '') return { value, error: label + ' is required' };
+  if (value.length > max) return { value, error: label + ' is too long (' + max + ' characters at most)' };
+  return { value, error: null };
+}
+
+function checkPrice(raw) {
+  const text = (raw || '').trim();
+  if (text === '') return { value: null, error: 'Price is required' };
+  const n = Number(text);
+  if (isNaN(n) || n < 0) return { value: null, error: 'Price must be a number of 0 or more' };
+  if (n > 99999999) return { value: null, error: 'Price is too large' };
+  return { value: n.toFixed(2), error: null };
+}
+
+function checkAuthorId(raw) {
+  if (!raw || isNaN(raw)) return { value: null, error: 'Please choose an author' };
+  return { value: Number(raw), error: null };
+}
+
+// authors
+async function showAuthors(req, res, opts = {}) {
+  const [authors] = await libDb.execute(SQL.allAuthors);
+  res.status(opts.status || 200).render('authors', {
+    userName: req.session.userName,
+    authors,
+    errors: opts.errors || {},
+    old: opts.old || {}
+  });
+}
+
+app.get('/authors', requireLogin, handle(async (req, res) => {
+  await showAuthors(req, res);
+}));
+
+app.post('/authors', requireLogin, handle(async (req, res) => {
+  const name = checkText(req.body.name, 'Name', MAX.name);
+  const country = checkText(req.body.country, 'Country', MAX.country);
+  const error = name.error || country.error;
+  if (error) {
+    return showAuthors(req, res, { status: 400, errors: { add: error }, old: req.body });
+  }
+  await libDb.execute(SQL.addAuthor, [name.value, country.value]);
+  res.redirect('/authors');
+}));
+
+app.get('/authors/:id/edit', requireLogin, handle(async (req, res) => {
+  const [rows] = await libDb.execute(SQL.oneAuthor, [req.params.id]);
+  if (rows.length === 0) {
+    return res.status(404).render('error', { title: 'Page not found', message: "This page doesn't exist." });
+  }
+  res.render('author-edit', { userName: req.session.userName, author: rows[0], error: '' });
+}));
+
+app.post('/authors/:id/edit', requireLogin, handle(async (req, res) => {
+  const name = checkText(req.body.name, 'Name', MAX.name);
+  const country = checkText(req.body.country, 'Country', MAX.country);
+  const error = name.error || country.error;
+  if (error) {
+    const typed = { author_id: req.params.id, name: req.body.name || '', country: req.body.country || '' };
+    return res.status(400).render('author-edit', { userName: req.session.userName, author: typed, error });
+  }
+  await libDb.execute(SQL.editAuthor, [name.value, country.value, req.params.id]);
+  res.redirect('/authors');
+}));
+
+app.post('/authors/:id/delete', requireLogin, handle(async (req, res) => {
+  await libDb.execute(SQL.deleteAuthor, [req.params.id]);
+  res.redirect('/authors');
+}));
+
+// books
+async function showBooks(req, res, opts = {}) {
+  const [books] = await libDb.execute(SQL.allBooks);
+  const [authors] = await libDb.execute(SQL.allAuthors);
+  res.status(opts.status || 200).render('books', {
+    userName: req.session.userName,
+    books,
+    authors,
+    errors: opts.errors || {},
+    old: opts.old || {}
+  });
+}
+
+app.get('/books', requireLogin, handle(async (req, res) => {
+  await showBooks(req, res);
+}));
+
+app.post('/books', requireLogin, handle(async (req, res) => {
+  const title = checkText(req.body.title, 'Title', MAX.title);
+  const price = checkPrice(req.body.price);
+  const author = checkAuthorId(req.body.author_id);
+  const error = title.error || price.error || author.error;
+  if (error) {
+    return showBooks(req, res, { status: 400, errors: { add: error }, old: req.body });
+  }
+  try {
+    await libDb.execute(SQL.addBook, [title.value, price.value, author.value]);
+  } catch (err) {
+    // author does not exist
+    if (err.code === 'ER_NO_REFERENCED_ROW_2') {
+      return showBooks(req, res, { status: 400, errors: { add: 'Please choose an existing author' }, old: req.body });
+    }
+    throw err;
+  }
+  res.redirect('/books');
+}));
+
+app.get('/books/:id/edit', requireLogin, handle(async (req, res) => {
+  const [rows] = await libDb.execute(SQL.oneBook, [req.params.id]);
+  if (rows.length === 0) {
+    return res.status(404).render('error', { title: 'Page not found', message: "This page doesn't exist." });
+  }
+  const [authors] = await libDb.execute(SQL.allAuthors);
+  res.render('book-edit', { userName: req.session.userName, book: rows[0], authors, error: '' });
+}));
+
+app.post('/books/:id/edit', requireLogin, handle(async (req, res) => {
+  const title = checkText(req.body.title, 'Title', MAX.title);
+  const price = checkPrice(req.body.price);
+  const author = checkAuthorId(req.body.author_id);
+  const [authors] = await libDb.execute(SQL.allAuthors);
+  const typed = { book_id: req.params.id, title: req.body.title || '', price: req.body.price || '', author_id: req.body.author_id || '' };
+  const error = title.error || price.error || author.error;
+  if (error) {
+    return res.status(400).render('book-edit', { userName: req.session.userName, book: typed, authors, error });
+  }
+  try {
+    await libDb.execute(SQL.editBook, [title.value, price.value, author.value, req.params.id]);
+  } catch (err) {
+    if (err.code === 'ER_NO_REFERENCED_ROW_2') {
+      return res.status(400).render('book-edit', { userName: req.session.userName, book: typed, authors, error: 'Please choose an existing author' });
+    }
+    throw err;
+  }
+  res.redirect('/books');
+}));
+
+app.post('/books/:id/delete', requireLogin, handle(async (req, res) => {
+  await libDb.execute(SQL.deleteBook, [req.params.id]);
+  res.redirect('/books');
+}));
+
+// must stay last
+app.use((req, res) => {
+  res.status(404).render('error', { title: 'Page not found', message: "This page doesn't exist." });
+});
+
 app.use((err, req, res, next) => {
   console.error(err);
-  res.status(500).send('Something went wrong. Please try again later.');
+  res.status(500).render('error', { title: 'Something went wrong', message: 'Please try again later.' });
 });
 
 const PORT = process.env.PORT || 3000;

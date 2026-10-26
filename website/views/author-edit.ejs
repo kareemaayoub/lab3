@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit author</title>
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+    <div class="card wide">
+        <%- include('nav', { title: 'Edit author' }) %>
+
+        <form action="/authors/<%= author.author_id %>/edit" method="POST">
+            <div class="field">
+                <label for="name">Name</label>
+                <input type="text" id="name" name="name" value="<%= author.name %>">
+            </div>
+            <div class="field">
+                <label for="country">Country</label>
+                <input type="text" id="country" name="country" value="<%= author.country %>">
+            </div>
+            <% if (error) { %><p class="server-error"><%= error %></p><% } %>
+            <button type="submit" class="btn">Save</button>
+            <a class="btn-outline" href="/authors">Cancel</a>
+        </form>
+    </div>
+</body>
+</html>

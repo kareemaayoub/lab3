@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Authors</title>
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+    <div class="card wide">
+        <%- include('nav', { title: 'Authors' }) %>
+
+        <form class="lib-form" action="/authors" method="POST">
+            <input type="text" name="name" placeholder="Name" value="<%= old.name || '' %>">
+            <input type="text" name="country" placeholder="Country" value="<%= old.country || '' %>">
+            <button type="submit" class="btn">Add author</button>
+        </form>
+        <span class="field-error"><%= errors.add || '' %></span>
+
+        <% if (authors.length === 0) { %>
+            <p class="empty">No authors yet. Add the first one above.</p>
+        <% } else { %>
+            <div class="table-wrap">
+                <table class="data">
+                    <tr><th>ID</th><th>Name</th><th>Country</th><th></th></tr>
+                    <% authors.forEach(a => { %>
+                        <tr>
+                            <td><%= a.author_id %></td>
+                            <td><%= a.name %></td>
+                            <td><%= a.country %></td>
+                            <td>
+                                <div class="actions">
+                                <a class="btn-outline" href="/authors/<%= a.author_id %>/edit">Edit</a>
+                                <form action="/authors/<%= a.author_id %>/delete" method="POST"
+                                      onsubmit="return confirm('Delete this author? All of their books will be deleted too.')">
+                                    <button type="submit" class="btn-danger">Delete</button>
+                                </form>
+                                </div>
+                            </td>
+                        </tr>
+                    <% }) %>
+                </table>
+            </div>
+        <% } %>
+    </div>
+</body>
+</html>
