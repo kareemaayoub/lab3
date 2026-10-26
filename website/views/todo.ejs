@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>To-Do</title>
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+    <div class="card wide">
+        <div class="header">
+            <h2>To-Do</h2>
+            <div class="user-box">
+                <span>Hi, <%= name %></span>
+                <form action="/logout" method="POST">
+                    <button type="submit" class="btn-outline">Log out</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="add-box">
+            <form class="add-form" action="/todo" method="POST" novalidate onsubmit="return validateTitle(this)">
+                <input type="text" name="title" placeholder="What needs to be done?" value="<%= old.title && !editId ? old.title : '' %>">
+                <button type="submit" class="btn">Add</button>
+            </form>
+            <span class="field-error title-error"><%= errors.add || '' %></span>
+        </div>
+
+        <ul class="todo-list">
+            <% if (todos.length === 0) { %>
+                <li class="empty">No to-dos yet. Add your first one above.</li>
+            <% } else { %>
+                <% todos.forEach(function(todo) { %>
+                    <% const hasError = editId && String(editId) === String(todo.todo_id); %>
+                    <li class="todo-item">
+                        <form action="/todo/done/<%= todo.todo_id %>" method="POST">
+                            <input type="hidden" name="is_done" value="<%= todo.is_done ? 0 : 1 %>">
+                            <button type="submit" class="check <%= todo.is_done ? 'checked' : '' %>"
+                                    title="<%= todo.is_done ? 'Mark as not done' : 'Mark as done' %>"><%= todo.is_done ? '✓' : '' %></button>
+                        </form>
+
+                        <form class="edit-form" action="/todo/edit/<%= todo.todo_id %>" method="POST" novalidate onsubmit="return validateTitle(this)">
+                            <input type="text" name="title" class="<%= todo.is_done ? 'done' : '' %>"
+                                   value="<%= hasError ? old.title : todo.title %>">
+                            <button type="submit" class="btn-outline">Save</button>
+                        </form>
+
+                        <form action="/todo/delete/<%= todo.todo_id %>" method="POST"
+                              onsubmit="return confirm('Are you sure you want to delete this to-do?')">
+                            <button type="submit" class="btn-danger">Delete</button>
+                        </form>
+
+                        <span class="field-error title-error"><%= hasError ? errors.edit : '' %></span>
+                    </li>
+                <% }); %>
+            <% } %>
+        </ul>
+    </div>
+
+    <script>
+        function validateTitle(form) {
+            const input = form.elements['title'];
+            const errorEl = form.parentElement.querySelector('.title-error');
+            const value = input.value.trim();
+            let msg = '';
+
+            if (value === '') msg = 'Title is required';
+            else if (value.length > 200) msg = 'Title is too long (200 characters at most)';
+
+            errorEl.innerText = msg;
+            return msg === '';
+        }
+    </script>
+</body>
+</html>

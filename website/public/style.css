@@ -1,0 +1,146 @@
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    font-family: 'Segoe UI', Tahoma, Arial, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #0f172a, #1e3a5f);
+    padding: 16px;
+}
+
+.card {
+    width: 100%;
+    max-width: 400px;
+    background: #1e293b;
+    padding: 36px 28px;
+    border-radius: 16px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+}
+.card.wide { max-width: 580px; }
+
+h2 { color: #89CFF0; font-size: 30px; font-weight: 600; }
+.card > h2 { text-align: center; margin-bottom: 8px; }
+
+.subtitle { color: #94a3b8; text-align: center; font-size: 14px; margin-bottom: 26px; }
+
+.server-error {
+    background: rgba(239, 68, 68, 0.12);
+    border: 1px solid #ef4444;
+    color: #fca5a5;
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 14px;
+    margin-bottom: 20px;
+}
+
+.field { margin-bottom: 16px; }
+label { display: block; color: #cbd5e1; font-size: 14px; margin-bottom: 6px; }
+
+input[type="text"], input[type="email"], input[type="password"] {
+    width: 100%;
+    padding: 12px 14px;
+    background: #0f172a;
+    border: 1px solid #334155;
+    border-radius: 8px;
+    color: #f1f5f9;
+    font-size: 15px;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+input:focus { border-color: #89CFF0; box-shadow: 0 0 0 3px rgba(137, 207, 240, 0.2); }
+
+.field-error { display: block; color: #f87171; font-size: 13px; margin-top: 5px; min-height: 16px; }
+
+.btn {
+    padding: 12px 20px;
+    background: #89CFF0;
+    color: #0f172a;
+    border: none;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+}
+.btn:hover { background: #a8dcf5; }
+.btn:active { transform: scale(0.98); }
+.btn.full { width: 100%; }
+
+.btn-outline {
+    padding: 8px 14px;
+    background: transparent;
+    color: #89CFF0;
+    border: 1px solid #89CFF0;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+.btn-outline:hover { background: rgba(137, 207, 240, 0.12); }
+
+.btn-danger {
+    padding: 8px 14px;
+    background: transparent;
+    color: #f87171;
+    border: 1px solid #f87171;
+    border-radius: 8px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+.btn-danger:hover { background: rgba(248, 113, 113, 0.12); }
+
+.footer { text-align: center; color: #94a3b8; font-size: 14px; margin-top: 22px; }
+.footer a { color: #89CFF0; text-decoration: none; font-weight: 500; }
+.footer a:hover { text-decoration: underline; }
+
+.header { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 22px; flex-wrap: wrap; }
+.user-box { display: flex; align-items: center; gap: 12px; color: #cbd5e1; font-size: 14px; }
+
+.add-form { display: flex; gap: 10px; }
+.add-form input { flex: 1; min-width: 0; }
+
+.todo-list { list-style: none; margin-top: 18px; }
+
+.todo-item {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    background: #0f172a;
+    border: 1px solid #334155;
+    border-radius: 8px;
+    padding: 10px 12px;
+    margin-bottom: 10px;
+}
+.todo-item .title-error { flex-basis: 100%; margin-top: 0; min-height: 0; }
+
+.check {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 2px solid #89CFF0;
+    background: transparent;
+    color: #0f172a;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    padding: 0;
+    flex-shrink: 0;
+}
+.check.checked { background: #89CFF0; }
+
+.edit-form { display: flex; gap: 8px; flex: 1 1 180px; min-width: 0; }
+.edit-form input { flex: 1; min-width: 0; padding: 9px 12px; font-size: 14px; }
+.edit-form input.done { text-decoration: line-through; color: #64748b; }
+
+.empty { text-align: center; color: #94a3b8; font-size: 14px; padding: 24px 0; }
+
+@media (max-width: 480px) {
+    .card { padding: 24px 16px; }
+    h2 { font-size: 26px; }
+    .add-form { flex-direction: column; }
+}

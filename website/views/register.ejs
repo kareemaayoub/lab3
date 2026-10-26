@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register</title>
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+    <div class="card">
+        <h2>Register</h2>
+        <p class="subtitle">Create your account to get started</p>
+
+        <form action="/register" method="POST" novalidate onsubmit="return validateForm()">
+            <div class="field">
+                <label for="name">Name</label>
+                <input type="text" id="name" name="name" placeholder="Your full name" value="<%= old.name || '' %>">
+                <span id="nameError" class="field-error"><%= errors.name || '' %></span>
+            </div>
+            <div class="field">
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" placeholder="you@example.com" value="<%= old.email || '' %>">
+                <span id="emailError" class="field-error"><%= errors.email || '' %></span>
+            </div>
+            <div class="field">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" placeholder="Enter your password">
+                <span id="passwordError" class="field-error"><%= errors.password || '' %></span>
+            </div>
+            <div class="field">
+                <label for="confirm_password">Confirm Password</label>
+                <input type="password" id="confirm_password" name="confirm_password" placeholder="Re-enter your password">
+                <span id="confirmError" class="field-error"><%= errors.confirm || '' %></span>
+            </div>
+            <button type="submit" class="btn full">Register</button>
+        </form>
+
+        <p class="footer">Already have an account? <a href="/login">Login</a></p>
+    </div>
+
+    <script>
+        function validateForm() {
+            let name = document.getElementById('name').value.trim();
+            let email = document.getElementById('email').value.trim();
+            let password = document.getElementById('password').value;
+            let confirm_password = document.getElementById('confirm_password').value;
+            let isValid = true;
+
+            document.getElementById('nameError').innerText = name === '' ? 'Name is required' : '';
+            if (name === '') isValid = false;
+
+            document.getElementById('emailError').innerText = email === '' ? 'Email is required' : '';
+            if (email === '') isValid = false;
+
+            document.getElementById('passwordError').innerText = password === '' ? 'Password is required' : '';
+            if (password === '') isValid = false;
+
+            document.getElementById('confirmError').innerText = confirm_password === '' ? 'Confirm password is required' : '';
+            if (confirm_password === '') isValid = false;
+
+            if (password !== '' && confirm_password !== '' && password !== confirm_password) {
+                document.getElementById('confirmError').innerText = 'Passwords do not match';
+                isValid = false;
+            }
+
+            return isValid;
+        }
+    </script>
+</body>
+</html>
