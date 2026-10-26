@@ -61,4 +61,6 @@ npm start
 - F2.4 Remove a book with the Delete button. It asks "Are you sure?" first.
 - F2.5 Remove an author with the Delete button. Their books are deleted too because of ON DELETE CASCADE.
 
+Bonus: books can have a cover image and authors can have a photo. Choose the image in the add form or in the edit form (only image files, 10 MB at most). The images are saved in `website/public/uploads` (the folder is made automatically) and only the file name is saved in the database (`book.cover` and `author.photo`). This uses the `multer` package, which `npm install` installs.
+
 The server checks every form: the fields are required, the text is not longer than the column size in the database, and the price is a number that is 0 or more. If you add a book with an author that does not exist, MySQL gives error 1452 and the page shows a message instead of crashing. All SQL uses `?` so the values are not written inside the query. The books and authors pages need a login.

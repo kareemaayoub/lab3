@@ -188,6 +188,25 @@ app.post('/todo/delete/:id', requireLogin, handle(async (req, res) => {
   res.redirect('/todo');
 }));
 
+// image upload (bonus) - files are saved in public/uploads
+const multer = require('multer');
+const path = require('path');
+
+const storage = multer.diskStorage({
+  destination: 'public/uploads',
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + path.extname(file.originalname));
+  }
+});
+
+const upload = multer({
+  storage,
+  limits: { fileSize: 10 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    cb(null, file.mimetype.startsWith('image/'));
+  }
+});
+
 // library database connection
 const libDb = mysql.createPool({
   host: process.env.DB_HOST,
@@ -200,16 +219,18 @@ const libDb = mysql.createPool({
 
 // SQL for each page (? is where a value goes)
 const SQL = {
-  allAuthors: 'SELECT author_id, name, country FROM author ORDER BY author_id',
-  oneAuthor: 'SELECT author_id, name, country FROM author WHERE author_id = ?',
+  allAuthors: 'SELECT author_id, name, country, photo FROM author ORDER BY author_id',
+  oneAuthor: 'SELECT author_id, name, country, photo FROM author WHERE author_id = ?',
   addAuthor: 'INSERT INTO author (name, country) VALUES (?, ?)',
   editAuthor: 'UPDATE author SET name = ?, country = ? WHERE author_id = ?',
   deleteAuthor: 'DELETE FROM author WHERE author_id = ?',
-  allBooks: 'SELECT book_id, title, price, author_id FROM book ORDER BY book_id',
-  oneBook: 'SELECT book_id, title, price, author_id FROM book WHERE book_id = ?',
+  allBooks: 'SELECT book_id, title, price, author_id, cover FROM book ORDER BY book_id',
+  oneBook: 'SELECT book_id, title, price, author_id, cover FROM book WHERE book_id = ?',
   addBook: 'INSERT INTO book (title, price, author_id) VALUES (?, ?, ?)',
   editBook: 'UPDATE book SET title = ?, price = ?, author_id = ? WHERE book_id = ?',
-  deleteBook: 'DELETE FROM book WHERE book_id = ?'
+  deleteBook: 'DELETE FROM book WHERE book_id = ?',
+  setPhoto: 'UPDATE author SET photo = ? WHERE author_id = ?',
+  setCover: 'UPDATE book SET cover = ? WHERE book_id = ?'
 };
 
 // same sizes as the VARCHARs in the DDL
@@ -251,14 +272,17 @@ app.get('/authors', requireLogin, handle(async (req, res) => {
   await showAuthors(req, res);
 }));
 
-app.post('/authors', requireLogin, handle(async (req, res) => {
+app.post('/authors', requireLogin, upload.single('photo'), handle(async (req, res) => {
   const name = checkText(req.body.name, 'Name', MAX.name);
   const country = checkText(req.body.country, 'Country', MAX.country);
   const error = name.error || country.error;
   if (error) {
     return showAuthors(req, res, { status: 400, errors: { add: error }, old: req.body });
   }
-  await libDb.execute(SQL.addAuthor, [name.value, country.value]);
+  const [result] = await libDb.execute(SQL.addAuthor, [name.value, country.value]);
+  if (req.file) {
+    await libDb.execute(SQL.setPhoto, [req.file.filename, result.insertId]);
+  }
   res.redirect('/authors');
 }));
 
@@ -270,15 +294,18 @@ app.get('/authors/:id/edit', requireLogin, handle(async (req, res) => {
   res.render('author-edit', { userName: req.session.userName, author: rows[0], error: '' });
 }));
 
-app.post('/authors/:id/edit', requireLogin, handle(async (req, res) => {
+app.post('/authors/:id/edit', requireLogin, upload.single('photo'), handle(async (req, res) => {
   const name = checkText(req.body.name, 'Name', MAX.name);
   const country = checkText(req.body.country, 'Country', MAX.country);
   const error = name.error || country.error;
   if (error) {
-    const typed = { author_id: req.params.id, name: req.body.name || '', country: req.body.country || '' };
+    const typed = { author_id: req.params.id, name: req.body.name || '', country: req.body.country || '', photo: req.body.old_photo || '' };
     return res.status(400).render('author-edit', { userName: req.session.userName, author: typed, error });
   }
   await libDb.execute(SQL.editAuthor, [name.value, country.value, req.params.id]);
+  if (req.file) {
+    await libDb.execute(SQL.setPhoto, [req.file.filename, req.params.id]);
+  }
   res.redirect('/authors');
 }));
 
@@ -304,7 +331,7 @@ app.get('/books', requireLogin, handle(async (req, res) => {
   await showBooks(req, res);
 }));
 
-app.post('/books', requireLogin, handle(async (req, res) => {
+app.post('/books', requireLogin, upload.single('cover'), handle(async (req, res) => {
   const title = checkText(req.body.title, 'Title', MAX.title);
   const price = checkPrice(req.body.price);
   const author = checkAuthorId(req.body.author_id);
@@ -313,7 +340,10 @@ app.post('/books', requireLogin, handle(async (req, res) => {
     return showBooks(req, res, { status: 400, errors: { add: error }, old: req.body });
   }
   try {
-    await libDb.execute(SQL.addBook, [title.value, price.value, author.value]);
+    const [result] = await libDb.execute(SQL.addBook, [title.value, price.value, author.value]);
+    if (req.file) {
+      await libDb.execute(SQL.setCover, [req.file.filename, result.insertId]);
+    }
   } catch (err) {
     // author does not exist
     if (err.code === 'ER_NO_REFERENCED_ROW_2') {
@@ -333,18 +363,21 @@ app.get('/books/:id/edit', requireLogin, handle(async (req, res) => {
   res.render('book-edit', { userName: req.session.userName, book: rows[0], authors, error: '' });
 }));
 
-app.post('/books/:id/edit', requireLogin, handle(async (req, res) => {
+app.post('/books/:id/edit', requireLogin, upload.single('cover'), handle(async (req, res) => {
   const title = checkText(req.body.title, 'Title', MAX.title);
   const price = checkPrice(req.body.price);
   const author = checkAuthorId(req.body.author_id);
   const [authors] = await libDb.execute(SQL.allAuthors);
-  const typed = { book_id: req.params.id, title: req.body.title || '', price: req.body.price || '', author_id: req.body.author_id || '' };
+  const typed = { book_id: req.params.id, title: req.body.title || '', price: req.body.price || '', author_id: req.body.author_id || '', cover: req.body.old_cover || '' };
   const error = title.error || price.error || author.error;
   if (error) {
     return res.status(400).render('book-edit', { userName: req.session.userName, book: typed, authors, error });
   }
   try {
     await libDb.execute(SQL.editBook, [title.value, price.value, author.value, req.params.id]);
+    if (req.file) {
+      await libDb.execute(SQL.setCover, [req.file.filename, req.params.id]);
+    }
   } catch (err) {
     if (err.code === 'ER_NO_REFERENCED_ROW_2') {
       return res.status(400).render('book-edit', { userName: req.session.userName, book: typed, authors, error: 'Please choose an existing author' });
@@ -365,6 +398,9 @@ app.use((req, res) => {
 });
 
 app.use((err, req, res, next) => {
+  if (err.code === 'LIMIT_FILE_SIZE') {
+    return res.status(400).render('error', { title: 'Image too big', message: 'The image must be 10 MB at most.' });
+  }
   console.error(err);
   res.status(500).render('error', { title: 'Something went wrong', message: 'Please try again later.' });
 });
@@ -372,4 +408,4 @@ app.use((err, req, res, next) => {
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
-});
+});

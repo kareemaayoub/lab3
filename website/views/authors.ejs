@@ -10,9 +10,10 @@
     <div class="card wide">
         <%- include('nav', { title: 'Authors' }) %>
 
-        <form class="lib-form" action="/authors" method="POST">
+        <form class="lib-form" action="/authors" method="POST" enctype="multipart/form-data">
             <input type="text" name="name" placeholder="Name" value="<%= old.name || '' %>">
             <input type="text" name="country" placeholder="Country" value="<%= old.country || '' %>">
+            <input type="file" name="photo" accept="image/*">
             <button type="submit" class="btn">Add author</button>
         </form>
         <span class="field-error"><%= errors.add || '' %></span>
@@ -22,10 +23,11 @@
         <% } else { %>
             <div class="table-wrap">
                 <table class="data">
-                    <tr><th>ID</th><th>Name</th><th>Country</th><th></th></tr>
+                    <tr><th>ID</th><th>Photo</th><th>Name</th><th>Country</th><th></th></tr>
                     <% authors.forEach(a => { %>
                         <tr>
                             <td><%= a.author_id %></td>
+                            <td><% if (a.photo) { %><img class="thumb" src="/uploads/<%= a.photo %>" alt="photo"><% } %></td>
                             <td><%= a.name %></td>
                             <td><%= a.country %></td>
                             <td>

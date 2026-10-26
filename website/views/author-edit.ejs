@@ -10,7 +10,7 @@
     <div class="card wide">
         <%- include('nav', { title: 'Edit author' }) %>
 
-        <form action="/authors/<%= author.author_id %>/edit" method="POST">
+        <form action="/authors/<%= author.author_id %>/edit" method="POST" enctype="multipart/form-data">
             <div class="field">
                 <label for="name">Name</label>
                 <input type="text" id="name" name="name" value="<%= author.name %>">
@@ -18,6 +18,12 @@
             <div class="field">
                 <label for="country">Country</label>
                 <input type="text" id="country" name="country" value="<%= author.country %>">
+            </div>
+            <div class="field">
+                <label for="photo">Photo</label>
+                <% if (author.photo) { %><img class="thumb" src="/uploads/<%= author.photo %>" alt="photo"><% } %>
+                <input type="hidden" name="old_photo" value="<%= author.photo || '' %>">
+                <input type="file" id="photo" name="photo" accept="image/*">
             </div>
             <% if (error) { %><p class="server-error"><%= error %></p><% } %>
             <button type="submit" class="btn">Save</button>

@@ -10,7 +10,7 @@
     <div class="card wide">
         <%- include('nav', { title: 'Edit book' }) %>
 
-        <form action="/books/<%= book.book_id %>/edit" method="POST">
+        <form action="/books/<%= book.book_id %>/edit" method="POST" enctype="multipart/form-data">
             <div class="field">
                 <label for="title">Title</label>
                 <input type="text" id="title" name="title" value="<%= book.title %>">
@@ -28,6 +28,12 @@
                         </option>
                     <% }) %>
                 </select>
+            </div>
+            <div class="field">
+                <label for="cover">Cover</label>
+                <% if (book.cover) { %><img class="thumb" src="/uploads/<%= book.cover %>" alt="cover"><% } %>
+                <input type="hidden" name="old_cover" value="<%= book.cover || '' %>">
+                <input type="file" id="cover" name="cover" accept="image/*">
             </div>
             <% if (error) { %><p class="server-error"><%= error %></p><% } %>
             <button type="submit" class="btn">Save</button>
